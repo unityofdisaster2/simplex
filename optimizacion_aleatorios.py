@@ -12,11 +12,10 @@ def numeros_y_simbolos(restriccion):
     resultado = float(restriccion[indice+3:])
     trozo_cadena = restriccion[0:indice].split()
     #se divide la cadena y se convierten todos los coeficientes numericos a flotantes
-    coeficientes = np.array(list(map(float,trozo_cadena[0:len(trozo_cadena):2])))
+    coeficientes = np.array(list(map(float,trozo_cadena[0:len(trozo_cadena)])))
     #se guardan los signos de suma y resta en una sublista
     #nota: no es necesario
-    signos = trozo_cadena[1:len(trozo_cadena):2] 
-    return (coeficientes,signos,resultado,condicion)
+    return (coeficientes,resultado,condicion)
 
 
 def evaluar_limites(lista_restricciones,n_restricciones,variables):
@@ -25,18 +24,21 @@ def evaluar_limites(lista_restricciones,n_restricciones,variables):
     for x in range(n_restricciones):
         for y in range(variables):
             #se itera sobre la cantidad de restricciones y los coefiecientes de cada variable
-            #
             if lista_restricciones[x][0][y] != 0:
-                limites[x,y] = lista_restricciones[x][2]/lista_restricciones[x][0][y]
+                limites[x,y] = lista_restricciones[x][1]/lista_restricciones[x][0][y]
             else:
                 limites[x,y] = 0     
     
     maximos = np.zeros(variables)
     minimos = np.zeros(variables)
+ 
     for x in range(variables):
         maximos[x] = np.max(limites[:,x])
-        minimos[x] = np.min(limites[:,x])
-
+        logic_index = limites[:,x]<0
+        if limites[logic_index,x] != []:
+            minimos[x] = np.max(limites[logic_index,x])
+        else:    
+            minimos[x] = np.min(limites[:,x])
     return maximos,minimos
 
 def generar_aleatorios(tam_poblacion,variables,max_lims,min_lims):
@@ -48,10 +50,11 @@ def generar_aleatorios(tam_poblacion,variables,max_lims,min_lims):
     for x in range(tam_poblacion):
         for y in range(variables):
             #print(min_lims[y],max_lims[y])
-            if condicion == 1:
-                matriz_poblacion[x][y] = random.randint(min_lims[y],max_lims[y])
-            else:
-                matriz_poblacion[x][y] = random.random()*max_lims[y]
+            #if condicion == 1:
+            matriz_poblacion[x][y] = random.randint(min_lims[y],max_lims[y])
+            #else:
+                #matriz_poblacion[x][y] = random.random()*max_lims[y]
+            #    matriz_poblacion[x][y] = random.uniform(min_lims[y],max_lims[y])
     return matriz_poblacion
 
 
@@ -66,12 +69,12 @@ def evaluar_aleatorios(matriz_aleatorios,funcion_objetivo,lista_valores,n_restri
             #se verifica que los valores generados de las variables cumplan con las condiciones de desigualdad
             elif y < 1+variables+n_restricciones:
                 if lista_valores[y-1-variables][-1] == "<=":
-                    if np.sum(nueva_mat[x,1:variables+1]*lista_valores[y-1-variables][0]) <= lista_valores[y-1-variables][2]:
+                    if np.sum(nueva_mat[x,1:variables+1]*lista_valores[y-1-variables][0]) <= lista_valores[y-1-variables][1]:
                         nueva_mat[x][y] = 1
                     else:
                         nueva_mat[x][y] = 0
                 elif lista_valores[y-1-variables][-1] == ">=":
-                    if np.sum(nueva_mat[x,1:variables+1]*lista_valores[y-1-variables][0]) >= lista_valores[y-1-variables][2]:
+                    if np.sum(nueva_mat[x,1:variables+1]*lista_valores[y-1-variables][0]) >= lista_valores[y-1-variables][1]:
                         nueva_mat[x][y] = 1
                     else:
                         nueva_mat[x][y] = 0
