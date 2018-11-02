@@ -14,16 +14,15 @@ def numeros_y_simbolos(restriccion):
     #se divide la cadena y se convierten todos los coeficientes numericos a flotantes
     coeficientes = np.array(list(map(float,trozo_cadena[0:len(trozo_cadena)])))
     #se guardan los signos de suma y resta en una sublista
-    #nota: no es necesario
     return (coeficientes,resultado,condicion)
 
 
-def evaluar_limites(lista_restricciones,n_restricciones,variables):
+def evaluar_limites(lista_restricciones,n_restricciones,variables,negatividad):
     #el argumento de lista_restricciones contiene los coeficientes, signos e igualdades
     limites = np.zeros((n_restricciones,variables))
+    #se itera sobre la cantidad de restricciones y los coefiecientes de cada variable
     for x in range(n_restricciones):
         for y in range(variables):
-            #se itera sobre la cantidad de restricciones y los coefiecientes de cada variable
             if lista_restricciones[x][0][y] != 0:
                 limites[x,y] = lista_restricciones[x][1]/lista_restricciones[x][0][y]
             else:
@@ -31,30 +30,30 @@ def evaluar_limites(lista_restricciones,n_restricciones,variables):
     
     maximos = np.zeros(variables)
     minimos = np.zeros(variables)
- 
+    print(limites)
     for x in range(variables):
         maximos[x] = np.max(limites[:,x])
-        logic_index = limites[:,x]<0
-        if limites[logic_index,x] != []:
-            minimos[x] = np.max(limites[logic_index,x])
-        else:    
-            minimos[x] = np.min(limites[:,x])
+        #se verifica cuantos numeros negativos hay en los minimos
+        if negatividad == 'si':
+            minimos[x] = 0
+        else:
+            logic_index = limites[:,x]<=0
+            cumplen = limites[logic_index,x] 
+            if cumplen != []:
+                minimos[x] = np.max(limites[logic_index,x])
+            else:    
+                minimos[x] = np.min(limites[:,x])
+    print(maximos,minimos)
     return maximos,minimos
 
 def generar_aleatorios(tam_poblacion,variables,max_lims,min_lims):
     matriz_poblacion = np.zeros((tam_poblacion,variables))
-    if len(list(set(max_lims)))==1:
-        condicion =1
-    else:
-        condicion =-1
     for x in range(tam_poblacion):
+        #matriz_poblacion[x] = min_lims+(max_lims-min_lims)*np.random.random((3,))
         for y in range(variables):
-            #print(min_lims[y],max_lims[y])
-            #if condicion == 1:
             matriz_poblacion[x][y] = random.randint(min_lims[y],max_lims[y])
-            #else:
-                #matriz_poblacion[x][y] = random.random()*max_lims[y]
-            #    matriz_poblacion[x][y] = random.uniform(min_lims[y],max_lims[y])
+            #matriz_poblacion[x][y] = random.random()*max_lims[y]
+            #matriz_poblacion[x][y] = random.uniform(min_lims[y],max_lims[y])
     return matriz_poblacion
 
 
@@ -62,28 +61,27 @@ def evaluar_aleatorios(matriz_aleatorios,funcion_objetivo,lista_valores,n_restri
     nueva_mat = np.zeros((tam_poblacion,2+variables+n_restricciones))
     for x in range(tam_poblacion):
         nueva_mat[x][0] = x
-        for y in range(1,2+variables+n_restricciones):
-            #se guardan valores aleatorios de las variables
-            if y <= variables:
-                nueva_mat[x][y] = matriz_aleatorios[x][y-1]
-            #se verifica que los valores generados de las variables cumplan con las condiciones de desigualdad
-            elif y < 1+variables+n_restricciones:
+        #se guardan valores aleatorios de las variables
+        nueva_mat[x,1:variables+1] = matriz_aleatorios[x]
+        for y in range(1+variables,2+variables+n_restricciones): 
+            if y < 1+variables+n_restricciones:
                 if lista_valores[y-1-variables][-1] == "<=":
-                    if np.sum(nueva_mat[x,1:variables+1]*lista_valores[y-1-variables][0]) <= lista_valores[y-1-variables][1]:
+                    if np.dot(nueva_mat[x,1:variables+1],lista_valores[y-1-variables][0]) <= lista_valores[y-1-variables][1]:
                         nueva_mat[x][y] = 1
                     else:
                         nueva_mat[x][y] = 0
                 elif lista_valores[y-1-variables][-1] == ">=":
-                    if np.sum(nueva_mat[x,1:variables+1]*lista_valores[y-1-variables][0]) >= lista_valores[y-1-variables][1]:
+                    if np.dot(nueva_mat[x,1:variables+1],lista_valores[y-1-variables][0]) >= lista_valores[y-1-variables][1]:
                         nueva_mat[x][y] = 1
                     else:
                         nueva_mat[x][y] = 0
             else:
                 #si se cumplen todas las condiciones
                 if np.sum(nueva_mat[x,1+variables:1+variables+n_restricciones]) == len(lista_valores):
-                    nueva_mat[x,y] = np.sum(nueva_mat[x,1:variables+1]*funcion_objetivo)
+                    nueva_mat[x,y] = np.dot(nueva_mat[x,1:variables+1],funcion_objetivo)
                 else:
                     nueva_mat[x,y] = -1
+        
     #print(nueva_mat)
     return nueva_mat
 
@@ -110,39 +108,33 @@ def encuentra_minimo(tabla,variables):
 
 
 
-variables = int(input())
-funcion_objetivo = np.array(list(map(float,input().split())))
-restricciones = []
-num_restricciones = int(input())
-lista_valores = []
-for x in range(num_restricciones):
-    restricciones.append(input())
-    lista_valores.append(numeros_y_simbolos(restricciones[-1]))
-poblacion = 500000
+if __name__ == "__main__":
+    variables = int(input('ingrese numero de variables: '))
+    funcion_objetivo = np.array(list(map(float,input('ingrese la funcion objetivo: ').split())))
+    restricciones = []
+    negatividad = input('asumir no negatividad: ')
+    num_restricciones = int(input('ingrese numero de restricciones: '))
+    lista_valores = []
+    for x in range(num_restricciones):
+        print('r'+str(x)+': ',end="")
+        restricciones.append(input())
+        lista_valores.append(numeros_y_simbolos(restricciones[-1]))
+    poblacion = 1000000
 
-#print(lista_valores)
+    inicio = time.time()
 
-
-inicio = time.time()
-#limites = evaluar_limites(lista_valores,num_restricciones,variables)
-max_lims,min_lims = evaluar_limites(lista_valores,num_restricciones,variables)
-#random.seed(2)
-#print(limites)
-
-            
+    max_lims,min_lims = evaluar_limites(lista_valores,num_restricciones,variables,negatividad)
 
 
-
-for x in range(10):
-    mat_alet = generar_aleatorios(poblacion,variables,max_lims,min_lims)
-    alea = evaluar_aleatorios(mat_alet,funcion_objetivo,lista_valores,num_restricciones,variables,poblacion)
-    encuentra_maximo(alea,variables)
-    encuentra_minimo(alea,variables)
-    print("\n")
-
-
-fin = time.time()
+    for x in range(10):
+        mat_alet = generar_aleatorios(poblacion,variables,max_lims,min_lims)
+        alea = evaluar_aleatorios(mat_alet,funcion_objetivo,lista_valores,num_restricciones,variables,poblacion)
+        encuentra_maximo(alea,variables)
+        encuentra_minimo(alea,variables)
+        print("\n")
 
 
-print("tiempo de ejecucion: ",fin-inicio)
+    fin = time.time()
 
+
+    print("tiempo de ejecucion: ",fin-inicio)
