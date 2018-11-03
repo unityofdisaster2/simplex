@@ -94,26 +94,44 @@ def pivote_max(tabla,positivos,variables,diccionario_cj,diccionario_fila):
         print(tabla[:,-1])
         print(tabla[:,columna])
         aux = tabla[:,-1]/tabla[:,columna]
-
+        print(aux[:-2])
+        aux [aux == np.inf] = -np.inf
         contador = 0
         min_pos = np.max(aux[:-2])
         fila = np.argmax(aux[:-2])
+        logic_index = aux[:-2] <=0
+        print(logic_index)
         for x in aux[:-2]:
-            if x >= 0:
-                if contador == 0:                       
-                    if x<min_pos:
-                        min_pos = x
-                        fila = contador
-                else:
-                    if x<=min_pos:
-                        min_pos = x
-                        fila = contador                    
+            if logic_index.all():
+                if x >= 0:
+                    if contador == 0:
+                        if x<min_pos:
+                            print("llega")
+                            min_pos = x
+                            fila = contador
+                    else:
+                        if x<=min_pos:
+                            print("llega de nuevo")
+                            min_pos = x
+                            fila = contador                   
+            else:
+                if x > 0:
+                    if contador == 0:
+                        if x<min_pos:
+                            print("llega")
+                            min_pos = x
+                            fila = contador
+                    else:
+                        if x<=min_pos:
+                            print("llega de nuevo")
+                            min_pos = x
+                            fila = contador                   
             contador += 1
         diccionario_fila[fila] = diccionario_cj[columna]
         print("filas",fila,"col",columna)
         print(tabla[fila,columna])
         return fila,columna
-
+    
 def pivote_min(tabla,positivos,variables,diccionario_cj,diccionario_fila):
     if not positivos:
         fila = np.argmin(tabla[:len(restricciones),-1])
