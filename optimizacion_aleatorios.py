@@ -61,14 +61,10 @@ def evaluar_aleatorios(matriz_aleatorios,funcion_objetivo,lista_valores,n_restri
     nueva_mat = np.zeros((tam_poblacion,2+variables+n_restricciones))
     for x in range(tam_poblacion):
         nueva_mat[x][0] = x
-        for y in range(1,2+variables+n_restricciones):
-            #se guardan valores aleatorios de las variables
-            if y <= variables:
-                nueva_mat[x][y] = matriz_aleatorios[x][y-1]
-                print(nueva_mat[x,1:y+1],matriz_aleatorios[x])
-                time.sleep(1)
-            #se verifica que los valores generados de las variables cumplan con las condiciones de desigualdad
-            elif y < 1+variables+n_restricciones:
+        #se guardan valores aleatorios de las variables
+        nueva_mat[x,1:variables+1] = matriz_aleatorios[x]
+        for y in range(1+variables,2+variables+n_restricciones): 
+            if y < 1+variables+n_restricciones:
                 if lista_valores[y-1-variables][-1] == "<=":
                     if np.dot(nueva_mat[x,1:variables+1],lista_valores[y-1-variables][0]) <= lista_valores[y-1-variables][1]:
                         nueva_mat[x][y] = 1
@@ -85,6 +81,7 @@ def evaluar_aleatorios(matriz_aleatorios,funcion_objetivo,lista_valores,n_restri
                     nueva_mat[x,y] = np.dot(nueva_mat[x,1:variables+1],funcion_objetivo)
                 else:
                     nueva_mat[x,y] = -1
+        
     #print(nueva_mat)
     return nueva_mat
 
@@ -122,7 +119,7 @@ if __name__ == "__main__":
         print('r'+str(x)+': ',end="")
         restricciones.append(input())
         lista_valores.append(numeros_y_simbolos(restricciones[-1]))
-    poblacion = 50000
+    poblacion = 1000000
 
     inicio = time.time()
 
